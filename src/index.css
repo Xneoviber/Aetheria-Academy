@@ -33,3 +33,15 @@
 .glow-purple {
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-white/5 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-magic-purple/30 rounded-full hover:bg-magic-purple/50 transition-colors;
+}
