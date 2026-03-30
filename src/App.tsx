@@ -68,674 +68,112 @@ import { MessageLog } from './components/MessageLog';
 import { GameMenuModal } from './components/GameMenuModal';
 
 
+import { useAudio } from './hooks/useAudio';
+import { useGameState } from './hooks/useGameState';
+import { useCombat } from './hooks/useCombat';
+import { useSaveLoad } from './hooks/useSaveLoad';
+import { useQuests } from './hooks/useQuests';
+import { useLevelUp } from './hooks/useLevelUp';
+
 // --- Main Component ---
 
 export default function App() {
-  const [gameStarted, setGameStarted] = useState(false);
-  const [selectingGender, setSelectingGender] = useState(false);
-  const [distributingStats, setDistributingStats] = useState(false);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [showSkillTree, setShowSkillTree] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [showQuests, setShowQuests] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showOverwriteWarning, setShowOverwriteWarning] = useState<number | null>(null);
-  const [menuView, setMenuView] = useState<'main' | 'save' | 'load' | 'settings' | 'credits'>('main');
-  const [currentSlot, setCurrentSlot] = useState<number | null>(null);
-  const [availablePoints, setAvailablePoints] = useState(20);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
-  const [gameState, setGameState] = useState<GameState>({
-    player: { ...INITIAL_PLAYER },
-    currentLocation: "Grand Hall",
-    history: ["Welcome to Aetheria Academy. Your magical education begins today."],
-    inCombat: false,
-    enemy: null,
-    turn: 'player',
-    combatLog: [],
-    quests: [
-      {
-        id: 'explore_library',
-        title: 'The Whispering Scrolls',
-        description: 'Visit the Library to find the ancient scrolls of Aetheria.',
-        reward: { xp: 50, items: ['Mana Potion'] },
-        isCompleted: false,
-        requirement: { type: 'location', target: 'Library' }
-      },
-      {
-        id: 'train_hard',
-        title: 'Combat Basics',
-        description: 'Head to the Training Grounds to hone your magical skills.',
-        reward: { xp: 30 },
-        isCompleted: false,
-        requirement: { type: 'location', target: 'Training Grounds' }
-      },
-      {
-        id: 'first_victory',
-        title: 'Arcane Mastery',
-        description: 'Defeat a Rogue Familiar in combat.',
-        reward: { xp: 100, items: ['Spell: Arcane Missile'] },
-        isCompleted: false,
-        requirement: { type: 'combat', target: 'Rogue Familiar' }
-      }
-    ]
-  });
+  const {
+    volume,
+    setVolume,
+    isMuted,
+    setIsMuted,
+    audioRef,
+    clickSoundRef,
+    playSound
+  } = useAudio();
 
-  const logEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const clickSoundRef = useRef<HTMLAudioElement>(null);
+  const {
+    gameStarted,
+    setGameStarted,
+    selectingGender,
+    setSelectingGender,
+    distributingStats,
+    setDistributingStats,
+    gameState,
+    setGameState,
+    addLog,
+    rest,
+    move,
+    equipItem,
+    unequipItem,
+    useItem,
+    unlockSkill
+  } = useGameState(playSound);
 
-  const playSound = () => {
-    if (clickSoundRef.current && !isMuted) {
-      clickSoundRef.current.currentTime = 0;
-      clickSoundRef.current.play().catch(() => {});
-    }
-  };
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [gameState.history]);
-
-  const addLog = (message: string) => {
-    setGameState(prev => ({
-      ...prev,
-      history: [...prev.history, message]
-    }));
-  };
-
-  const checkQuests = (target: string, type: 'location' | 'combat' = 'location') => {
-    setGameState(prev => {
-      let updated = false;
-      const newQuests = prev.quests.map(quest => {
-        if (!quest.isCompleted && quest.requirement.type === type && quest.requirement.target === target) {
-          updated = true;
-          return { ...quest, isCompleted: true };
-        }
-        return quest;
-      });
-
-      if (updated) {
-        const completedQuests = newQuests.filter(q => q.isCompleted && !prev.quests.find(pq => pq.id === q.id && pq.isCompleted));
-        let newXp = prev.player.xp;
-        let newInventory = [...prev.player.inventory];
-        let newHistory = [...prev.history];
-        
-        completedQuests.forEach(q => {
-          newHistory.push(`✨ QUEST COMPLETED: ${q.title}!`);
-          newHistory.push(`Received ${q.reward.xp} XP.`);
-          newXp += q.reward.xp;
-          if (q.reward.items) {
-            q.reward.items.forEach(item => {
-              newHistory.push(`Received item: ${item}`);
-              newInventory.push(item);
-            });
-          }
-        });
-
-        return {
-          ...prev,
-          player: { ...prev.player, xp: newXp, inventory: newInventory },
-          quests: newQuests,
-          history: newHistory
-        };
-      }
-      return prev;
-    });
-  };
-
-  const finalizeCharacter = () => {
-    const p = gameState.player;
-    let trait = "Versatile Apprentice";
-    let bonusHp = 0;
-    let bonusMp = 0;
-    let startingItem = "";
-
-    const stats = { str: p.str, agi: p.agi, int: p.int, vit: p.vit, lck: p.lck };
-    const maxStat = Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b);
-
-    if (maxStat[0] === 'int') {
-      trait = "Arcane Prodigy";
-      bonusMp = 30;
-      startingItem = "Spell: Arcane Missile";
-    } else if (maxStat[0] === 'vit') {
-      trait = "Resilient Soul";
-      bonusHp = 30;
-      startingItem = "Protective Amulet";
-    } else if (maxStat[0] === 'agi') {
-      trait = "Ghost Step";
-      startingItem = "Swift Boots";
-    } else if (maxStat[0] === 'str') {
-      trait = "Forceful Will";
-      startingItem = "Spell: Kinetic Blast";
-    } else if (maxStat[0] === 'lck') {
-      trait = "Fortune's Favor";
-      startingItem = "Lucky Coin";
-    }
-
-    if (p.grace !== "None") addLog(`✨ You are blessed with ${p.grace}.`);
-    if (p.curse !== "None") addLog(`🌑 You carry the burden of ${p.curse}.`);
-
-    setGameState(prev => ({
-      ...prev,
-      player: {
-        ...prev.player,
-        trait,
-        maxHp: prev.player.vit * 10 + 50 + bonusHp,
-        hp: prev.player.vit * 10 + 50 + bonusHp,
-        maxMp: prev.player.int * 10 + 50 + bonusMp,
-        mp: prev.player.int * 10 + 50 + bonusMp,
-        inventory: [...prev.player.inventory, startingItem].filter(Boolean)
-      }
-    }));
-    setDistributingStats(false);
-    setGameStarted(true);
-  };
-
-  // --- Game Actions ---
-
-  const rest = () => {
-    playSound();
-    setGameState(prev => ({
-      ...prev,
-      player: {
-        ...prev.player,
-        hp: prev.player.maxHp,
-        mp: prev.player.maxMp
-      }
-    }));
-    addLog("✨ You take a deep rest. Your vitality and mana are fully restored.");
-  };
-
-  const move = (direction: string) => {
-    playSound();
-    const currentLoc = WORLD[gameState.currentLocation];
-    const nextLocName = currentLoc.exits[direction];
-    if (nextLocName) {
-      setGameState(prev => ({ ...prev, currentLocation: nextLocName }));
-      addLog(`You walk ${direction} to the ${nextLocName}.`);
-      checkQuests(nextLocName);
-    }
-  };
-
-  const addCombatLog = (message: string) => {
-    setGameState(prev => ({
-      ...prev,
-      combatLog: [...prev.combatLog, message].slice(-5)
-    }));
-  };
-
-  const startCombat = () => {
-    playSound();
-    const locationEnemies = ENEMIES_BY_LOCATION[gameState.currentLocation] || ENEMIES_BY_LOCATION["Training Grounds"];
-    const randomEnemy = locationEnemies[Math.floor(Math.random() * locationEnemies.length)];
-    const enemy: Enemy = { ...randomEnemy };
-
-    setGameState(prev => ({
-      ...prev,
-      inCombat: true,
-      enemy: enemy,
-      turn: 'player',
-      combatLog: [`A ${enemy.name} attacks!`]
-    }));
-    addLog(`A ${enemy.name} appears in the ${gameState.currentLocation} and attacks you!`);
-  };
+  const { checkQuests } = useQuests(setGameState, addLog);
 
   const getTotalStats = () => {
     return calculateTotalStats(gameState.player);
   };
 
-  const equipItem = (itemName: string) => {
-    const item = GAME_ITEMS[itemName];
-    if (!item) return;
+  const {
+    addCombatLog,
+    startCombat,
+    attack,
+    castSkill,
+    handleVictory,
+    handleDefeat
+  } = useCombat(
+    gameState,
+    setGameState,
+    getTotalStats,
+    addLog,
+    playSound,
+    checkQuests
+  );
 
-    setGameState(prev => {
-      const newEquipment = { ...prev.player.equipment };
-      const newInventory = [...prev.player.inventory];
-      
-      let slot: keyof Equipment | null = null;
-      if (item.type === 'Weapon') slot = 'weapon';
-      else if (item.type === 'Armor') slot = 'armor';
-      else if (item.type === 'Accessory') slot = 'accessory';
+  const {
+    showLevelUp,
+    setShowLevelUp,
+    availablePoints,
+    setAvailablePoints,
+    finalizeCharacter
+  } = useLevelUp(
+    gameState,
+    setGameState,
+    setGameStarted,
+    setDistributingStats,
+    addLog
+  );
 
-      if (slot) {
-        const currentlyEquipped = newEquipment[slot];
-        if (currentlyEquipped) {
-          newInventory.push(currentlyEquipped);
-        }
-        newEquipment[slot] = itemName;
-        const itemIndex = newInventory.indexOf(itemName);
-        if (itemIndex > -1) {
-          newInventory.splice(itemIndex, 1);
-        }
-        
-        addLog(`🛡️ Equipped ${itemName}.`);
-        return {
-          ...prev,
-          player: {
-            ...prev.player,
-            equipment: newEquipment,
-            inventory: newInventory
-          }
-        };
-      }
-      return prev;
-    });
-  };
+  const [showSkillTree, setShowSkillTree] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [showQuests, setShowQuests] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuView, setMenuView] = useState<'main' | 'save' | 'load' | 'settings' | 'credits'>('main');
 
-  const unequipItem = (slot: keyof Equipment) => {
-    setGameState(prev => {
-      const itemToUnequip = prev.player.equipment[slot];
-      if (!itemToUnequip) return prev;
+  const {
+    currentSlot,
+    setCurrentSlot,
+    showOverwriteWarning,
+    setShowOverwriteWarning,
+    saveGame,
+    loadGame,
+    hasSaveData,
+    getSaveSummary,
+    startNewGame
+  } = useSaveLoad(
+    gameState,
+    setGameState,
+    setGameStarted,
+    setSelectingGender,
+    setMenuView,
+    setAvailablePoints,
+    addLog,
+    playSound
+  );
 
-      const newEquipment = { ...prev.player.equipment, [slot]: null };
-      const newInventory = [...prev.player.inventory, itemToUnequip];
-
-      addLog(`📦 Unequipped ${itemToUnequip}.`);
-      return {
-        ...prev,
-        player: {
-          ...prev.player,
-          equipment: newEquipment,
-          inventory: newInventory
-        }
-      };
-    });
-  };
-
-  const useItem = (itemName: string) => {
-    const item = GAME_ITEMS[itemName];
-    if (!item) return;
-
-    if (item.type === 'Consumable') {
-      setGameState(prev => {
-        const newInventory = [...prev.player.inventory];
-        const itemIndex = newInventory.indexOf(itemName);
-        if (itemIndex > -1) {
-          newInventory.splice(itemIndex, 1);
-        }
-
-        let newHp = prev.player.hp;
-        let newMp = prev.player.mp;
-
-        if (item.id === 'mana_potion') {
-          newMp = Math.min(prev.player.maxMp, prev.player.mp + 50);
-          addLog(`🧪 You drank a Mana Potion. Restored 50 MP.`);
-        }
-
-        return {
-          ...prev,
-          player: {
-            ...prev.player,
-            hp: newHp,
-            mp: newMp,
-            inventory: newInventory
-          }
-        };
-      });
-    } else if (['Weapon', 'Armor', 'Accessory'].includes(item.type)) {
-      equipItem(itemName);
-    }
-  };
-
-  const castSkill = (skillId: string) => {
-    if (!gameState.enemy || gameState.turn !== 'player') return;
-    const skill = SKILL_TREE.find(s => s.id === skillId);
-    if (!skill || skill.type !== 'Active') return;
-
-    if (gameState.player.mp < skill.manaCost) {
-      addCombatLog("❌ Not enough Mana!");
-      return;
-    }
-
-    playSound();
-    const totalStats = getTotalStats();
-
-    let critChance = (totalStats.lck * 0.02);
-    if (gameState.player.curse === "Unlucky Soul") critChance -= 0.05;
-    const isCrit = Math.random() < critChance;
-
-    let playerDmg = Math.floor(totalStats.int * skill.damageMultiplier) + Math.floor(Math.random() * 10);
-    
-    if (gameState.player.trait === "Forceful Will") playerDmg += 5;
-    if (gameState.player.grace === "Arcane Affinity") playerDmg = Math.floor(playerDmg * 1.1);
-
-    if (isCrit) {
-      playerDmg = Math.floor(playerDmg * 1.5);
-      addCombatLog("✨ CRITICAL CAST!");
-    }
-    
-    const newEnemyHp = Math.max(0, gameState.enemy.hp - playerDmg);
-    addCombatLog(`🔮 You cast ${skill.name} for ${playerDmg} damage.`);
-
-    setGameState(prev => ({
-      ...prev,
-      player: { ...prev.player, mp: prev.player.mp - skill.manaCost },
-      enemy: prev.enemy ? { ...prev.enemy, hp: newEnemyHp } : null,
-      turn: newEnemyHp <= 0 ? 'player' : 'enemy'
-    }));
-
-    if (newEnemyHp <= 0) {
-      setTimeout(() => handleVictory(), 1000);
-    }
-  };
-
-  const attack = () => {
-    if (!gameState.enemy || gameState.turn !== 'player') return;
-    playSound();
-    const totalStats = getTotalStats();
-
-    const hasArcaneMissile = gameState.player.inventory?.includes("Spell: Arcane Missile");
-    const hasKineticBlast = gameState.player.inventory?.includes("Spell: Kinetic Blast");
-
-    // Player attacks (Basic Magic based on INT)
-    let critChance = (totalStats.lck * 0.02);
-    if (gameState.player.curse === "Unlucky Soul") critChance -= 0.05;
-    const isCrit = Math.random() < critChance;
-
-    let playerDmg = Math.floor(totalStats.int * 0.6) + Math.floor(Math.random() * 8);
-    
-    let attackMsg = "You cast a basic spark";
-    if (hasArcaneMissile) {
-      playerDmg += 8;
-      attackMsg = "You fire an Arcane Missile";
-    } else if (hasKineticBlast) {
-      playerDmg += 12;
-      attackMsg = "You release a Kinetic Blast";
-    }
-
-    if (gameState.player.trait === "Forceful Will") playerDmg += 5;
-    if (gameState.player.grace === "Arcane Affinity") playerDmg = Math.floor(playerDmg * 1.1);
-
-    if (isCrit) {
-      playerDmg = Math.floor(playerDmg * 1.5);
-      addCombatLog("✨ CRITICAL CAST!");
-    }
-    
-    const newEnemyHp = Math.max(0, gameState.enemy.hp - playerDmg);
-    addCombatLog(`${attackMsg} for ${playerDmg} damage.`);
-
-    setGameState(prev => ({
-      ...prev,
-      enemy: prev.enemy ? { ...prev.enemy, hp: newEnemyHp } : null,
-      turn: newEnemyHp <= 0 ? 'player' : 'enemy'
-    }));
-
-    if (newEnemyHp <= 0) {
-      setTimeout(() => handleVictory(), 1000);
-    }
-  };
+  const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (gameState.inCombat && gameState.turn === 'enemy' && gameState.enemy) {
-      const timer = setTimeout(() => {
-        // Enemy attacks back
-        const totalStats = getTotalStats();
-        let agi = totalStats.agi;
-        if (gameState.player.unlockedSkills.includes("haste")) agi = Math.floor(agi * 1.2);
-
-        let fleeChance = agi * 0.02 + (gameState.player.trait === "Ghost Step" ? 0.1 : 0);
-        if (gameState.player.grace === "Fleet Foot") fleeChance += 0.1;
-        const isEvaded = Math.random() < fleeChance;
-
-        if (isEvaded) {
-          addCombatLog(`💨 You nimbly evaded the ${gameState.enemy!.name}'s attack!`);
-        } else {
-          let enemyDmg = Math.max(1, gameState.enemy!.str + Math.floor(Math.random() * 5) - Math.floor(totalStats.vit * 0.2));
-          if (gameState.player.grace === "Iron Skin") enemyDmg = Math.floor(enemyDmg * 0.9);
-          if (gameState.player.curse === "Brittle Bones") enemyDmg = Math.floor(enemyDmg * 1.1);
-          
-          if (gameState.player.unlockedSkills?.includes("shield") && gameState.player.mp >= 10) {
-            enemyDmg = Math.floor(enemyDmg * 0.85);
-            setGameState(prev => ({ ...prev, player: { ...prev.player, mp: prev.player.mp - 10 } }));
-            addCombatLog("🛡️ Mana Shield absorbed some damage!");
-          }
-
-          const newPlayerHp = Math.max(0, gameState.player.hp - enemyDmg);
-          addCombatLog(`The ${gameState.enemy!.name} strikes you for ${enemyDmg} damage.`);
-
-          setGameState(prev => ({
-            ...prev,
-            player: { ...prev.player, hp: newPlayerHp }
-          }));
-
-          if (newPlayerHp <= 0) {
-            setTimeout(() => handleDefeat(), 1000);
-            return;
-          }
-        }
-
-        if (gameState.player.unlockedSkills?.includes("meditation")) {
-          setGameState(prev => {
-            const mpRecover = Math.floor(prev.player.maxMp * 0.05);
-            return {
-              ...prev,
-              player: { ...prev.player, mp: Math.min(prev.player.maxMp, prev.player.mp + mpRecover) }
-            };
-          });
-          addCombatLog("🧘 Deep Meditation restores some mana.");
-        }
-
-        if (gameState.player.curse === "Mana Leak") {
-          setGameState(prev => ({
-            ...prev,
-            player: { ...prev.player, mp: Math.max(0, prev.player.mp - 5) }
-          }));
-          addCombatLog("🌑 Your mana leaks away...");
-        }
-
-        setGameState(prev => ({ ...prev, turn: 'player' }));
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.inCombat, gameState.turn, gameState.enemy]);
-
-  const handleVictory = () => {
-    const enemy = gameState.enemy!;
-    addLog(`The ${enemy.name} dissipates into magical energy.`);
-    addLog(`Gained ${enemy.xpReward} XP and found: ${enemy.loot}.`);
-    checkQuests(enemy.name, 'combat');
-
-    setGameState(prev => {
-      let newXp = prev.player.xp + enemy.xpReward;
-      let newLevel = prev.player.level;
-      let newMaxHp = prev.player.maxHp;
-      let newMaxMp = prev.player.maxMp;
-      let newAttributePoints = prev.player.attributePoints;
-      let newSkillPoints = prev.player.skillPoints;
-      
-      if (newXp >= newLevel * 100) {
-        newXp -= newLevel * 100;
-        newLevel++;
-        newMaxHp += 15;
-        newMaxMp += 15;
-        newAttributePoints += 5;
-        newSkillPoints += 1;
-        setTimeout(() => addLog(`✨ Rank Up! You are now a Level ${newLevel} Apprentice! You have 5 new Attribute Points and 1 Skill Point to distribute.`), 500);
-      }
-
-      return {
-        ...prev,
-        inCombat: false,
-        enemy: null,
-        turn: 'player',
-        combatLog: [],
-        player: {
-          ...prev.player,
-          xp: newXp,
-          level: newLevel,
-          maxHp: newMaxHp,
-          maxMp: newMaxMp,
-          hp: newMaxHp,
-          mp: newMaxMp,
-          attributePoints: newAttributePoints,
-          skillPoints: newSkillPoints,
-          inventory: [...prev.player.inventory, enemy.loot]
-        }
-      };
-    });
-  };
-
-  const handleDefeat = () => {
-    addLog("Your vision fades as your mana depletes...");
-    setTimeout(() => {
-      setGameState(prev => ({
-        ...prev,
-        player: { ...INITIAL_PLAYER },
-        currentLocation: "Grand Hall",
-        history: ["You wake up in the Infirmary. The Matron has restored your energy."],
-        inCombat: false,
-        enemy: null,
-        turn: 'player',
-        combatLog: []
-      }));
-    }, 2000);
-  };
-
-  const unlockSkill = (skillId: string) => {
-    const skill = SKILL_TREE.find(s => s.id === skillId);
-    if (!skill) return;
-
-    if (gameState.player.skillPoints < skill.cost) {
-      addLog("❌ Not enough Skill Points.");
-      return;
-    }
-
-    if (gameState.player.unlockedSkills?.includes(skillId)) {
-      addLog("❌ Skill already unlocked.");
-      return;
-    }
-
-    const hasPrereqs = skill.prerequisites.every(p => gameState.player.unlockedSkills?.includes(p));
-    if (!hasPrereqs) {
-      addLog("❌ Prerequisites not met.");
-      return;
-    }
-
-    setGameState(prev => ({
-      ...prev,
-      player: {
-        ...prev.player,
-        skillPoints: prev.player.skillPoints - skill.cost,
-        unlockedSkills: [...prev.player.unlockedSkills, skillId]
-      }
-    }));
-    addLog(`✨ Skill Unlocked: ${skill.name}!`);
-  };
-
-  const startNewGame = (slot: number) => {
-    playSound();
-    setCurrentSlot(slot);
-    setSelectingGender(true);
-    setMenuView('main');
-    setAvailablePoints(20);
-    setGameState({
-      player: { ...INITIAL_PLAYER },
-      currentLocation: "Grand Hall",
-      history: ["Welcome to Aetheria Academy. Your magical education begins today."],
-      inCombat: false,
-      enemy: null,
-      turn: 'player',
-      combatLog: [],
-      quests: [
-        {
-          id: 'explore_library',
-          title: 'The Whispering Scrolls',
-          description: 'Visit the Library to find the ancient scrolls of Aetheria.',
-          reward: { xp: 50, items: ['Mana Potion'] },
-          isCompleted: false,
-          requirement: { type: 'location', target: 'Library' }
-        },
-        {
-          id: 'train_hard',
-          title: 'Combat Basics',
-          description: 'Head to the Training Grounds to hone your magical skills.',
-          reward: { xp: 30 },
-          isCompleted: false,
-          requirement: { type: 'location', target: 'Training Grounds' }
-        }
-      ]
-    });
-    setShowOverwriteWarning(null);
-  };
-
-  const saveGame = (slot?: number) => {
-    const targetSlot = slot ?? currentSlot;
-    if (targetSlot === null) return;
-
-    localStorage.setItem(`aetheria_save_${targetSlot}`, JSON.stringify({
-      player: gameState.player,
-      currentLocation: gameState.currentLocation,
-      history: gameState.history,
-      quests: gameState.quests
-    }));
-    addLog(`Magical progress recorded in Slot ${targetSlot}.`);
-  };
-
-  const loadGame = (slot?: number) => {
-    playSound();
-    const targetSlot = slot ?? currentSlot;
-    if (targetSlot === null) return;
-
-    const saved = localStorage.getItem(`aetheria_save_${targetSlot}`);
-    if (saved) {
-      const data = JSON.parse(saved);
-      setGameState({
-        player: {
-          ...INITIAL_PLAYER,
-          ...data.player,
-          inventory: data.player.inventory || [],
-          unlockedSkills: data.player.unlockedSkills || []
-        },
-        currentLocation: data.currentLocation,
-        history: data.history || ["Magical progress restored."],
-        inCombat: false,
-        enemy: null,
-        turn: 'player',
-        combatLog: [],
-        quests: data.quests || [
-          {
-            id: 'explore_library',
-            title: 'The Whispering Scrolls',
-            description: 'Visit the Library to find the ancient scrolls of Aetheria.',
-            reward: { xp: 50, items: ['Mana Potion'] },
-            isCompleted: false,
-            requirement: { type: 'location', target: 'Library' }
-          },
-          {
-            id: 'train_hard',
-            title: 'Combat Basics',
-            description: 'Head to the Training Grounds to hone your magical skills.',
-            reward: { xp: 30 },
-            isCompleted: false,
-            requirement: { type: 'location', target: 'Training Grounds' }
-          }
-        ]
-      });
-      setCurrentSlot(targetSlot);
-      setGameStarted(true);
-      setMenuView('main');
-      addLog(`Magical progress restored from Slot ${targetSlot}.`);
-    } else {
-      alert(`No saved game found in Slot ${targetSlot}.`);
-    }
-  };
-
-  const hasSaveData = (slot: number) => {
-    return !!localStorage.getItem(`aetheria_save_${slot}`);
-  };
-
-  const getSaveSummary = (slot: number) => {
-    const saved = localStorage.getItem(`aetheria_save_${slot}`);
-    if (!saved) return "Empty Slot";
-    const data = JSON.parse(saved);
-    return `Rank ${data.player.level} ${data.player.trait}`;
-  };
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [gameState.history]);
 
   const currentLocation = WORLD[gameState.currentLocation];
 
@@ -1329,7 +767,7 @@ export default function App() {
                   onObserve={() => { playSound(); addLog(`You observe the arcane patterns in the ${currentLocation.name}.`); }}
                   onPractice={startCombat}
                   onRest={gameState.currentLocation === "Dormitories" ? rest : undefined}
-                  onMove={move}
+                  onMove={(dir) => move(dir, checkQuests)}
                 />
               </div>
             )}
