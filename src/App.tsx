@@ -132,6 +132,7 @@ export default function App() {
     setGameState,
     setGameStarted,
     setDistributingStats,
+    setSelectingGender,
     addLog
   );
 

@@ -9,9 +9,6 @@ import {
   Shield, 
   RotateCcw, 
   ChevronRight,
-  Heart,
-  Zap,
-  Trophy,
   Sparkles,
   Flame,
   Wind,
@@ -22,7 +19,7 @@ import {
   Info
 } from 'lucide-react';
 import { GameState } from '../types';
-import { GRACES, CURSES } from '../constants';
+import { CharacterCreation } from './CharacterCreation';
 
 interface MainMenuProps {
   menuView: 'main' | 'save' | 'load' | 'settings' | 'credits';
@@ -338,201 +335,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </motion.div>
             )}
           </div>
-        ) : selectingGender ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            <h2 className="text-4xl font-bold text-white font-display">Choose Your Path</h2>
-            <div className="flex flex-col sm:flex-row justify-center gap-6">
-              <button 
-                onClick={() => {
-                  setGameState(prev => ({ ...prev, player: { ...prev.player, gender: 'Boy' } }));
-                  setSelectingGender(false);
-                  setDistributingStats(true);
-                }}
-                className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:bg-indigo-500/20 hover:border-indigo-500/50 transition-all group flex-1"
-              >
-                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                  <User className="text-blue-400" size={32} />
-                </div>
-                <span className="font-bold text-white font-display">Magic Apprentice (Boy)</span>
-              </button>
-              <button 
-                onClick={() => {
-                  setGameState(prev => ({ ...prev, player: { ...prev.player, gender: 'Girl' } }));
-                  setSelectingGender(false);
-                  setDistributingStats(true);
-                }}
-                className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:bg-purple-500/20 hover:border-purple-500/50 transition-all group flex-1"
-              >
-                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
-                  <User className="text-pink-400" size={32} />
-                </div>
-                <span className="font-bold text-white font-display">Magic Apprentice (Girl)</span>
-              </button>
-            </div>
-          </motion.div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8 bg-white/5 p-8 rounded-3xl border border-white/10 backdrop-blur-md"
-          >
-            <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold text-white font-display">Initial Attributes</h2>
-              <p className="text-slate-400 text-sm">Distribute your arcane potential. Your highest stat defines your unique trait.</p>
-            </div>
-
-            <div className="bg-magic-purple/10 py-2 px-4 rounded-full inline-block">
-              <span className="text-magic-purple font-bold text-sm tracking-widest uppercase">Points Available: {availablePoints}</span>
-            </div>
-
-            {/* Grace & Curse Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-md mx-auto">
-              {/* Grace */}
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-magic-purple" />
-                  <label className="text-[10px] font-bold text-magic-purple uppercase tracking-widest">Select Grace</label>
-                </div>
-                <select 
-                  value={gameState.player.grace}
-                  onChange={(e) => {
-                    const newGrace = e.target.value;
-                    const oldGrace = gameState.player.grace;
-                    const oldGraceObj = GRACES.find(g => g.name === oldGrace);
-                    const newGraceObj = GRACES.find(g => g.name === newGrace);
-                    
-                    setGameState(prev => ({ ...prev, player: { ...prev.player, grace: newGrace } }));
-                    setAvailablePoints(prev => prev + (oldGraceObj?.cost || 0) - (newGraceObj?.cost || 0));
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-magic-purple/50 appearance-none cursor-pointer hover:bg-white/10 transition-all"
-                >
-                  {GRACES.map(g => (
-                    <option key={g.name} value={g.name} className="bg-magic-dark">
-                      {g.name} {g.cost > 0 ? `(-${g.cost} AP)` : '(Free)'}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-slate-500 leading-relaxed px-1">
-                  {GRACES.find(g => g.name === gameState.player.grace)?.desc}
-                </p>
-              </div>
-
-              {/* Curse */}
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-2">
-                  <Flame size={14} className="text-red-400" />
-                  <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Innate Curse</label>
-                </div>
-                <select 
-                  value={gameState.player.curse}
-                  onChange={(e) => {
-                    const newCurse = e.target.value;
-                    const oldCurse = gameState.player.curse;
-                    const oldCurseObj = CURSES.find(c => c.name === oldCurse);
-                    const newCurseObj = CURSES.find(c => c.name === newCurse);
-                    
-                    setGameState(prev => ({ ...prev, player: { ...prev.player, curse: newCurse } }));
-                    setAvailablePoints(prev => prev - (oldCurseObj?.bonus || 0) + (newCurseObj?.bonus || 0));
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-red-400/50 appearance-none cursor-pointer hover:bg-white/10 transition-all"
-                >
-                  {CURSES.map(c => (
-                    <option key={c.name} value={c.name} className="bg-magic-dark">
-                      {c.name} {c.bonus > 0 ? `(+${c.bonus} AP)` : '(None)'}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-slate-500 leading-relaxed px-1">
-                  {CURSES.find(c => c.name === gameState.player.curse)?.desc}
-                </p>
-              </div>
-            </div>
-
-            {/* Grace Preview */}
-            <div className="max-w-md mx-auto p-4 bg-magic-purple/5 border border-magic-purple/20 rounded-2xl text-left space-y-2">
-              <div className="text-[10px] font-bold text-magic-purple uppercase tracking-widest">Current Grace</div>
-              {(() => {
-                const stats = { 
-                  str: gameState.player.str, 
-                  agi: gameState.player.agi, 
-                  int: gameState.player.int, 
-                  vit: gameState.player.vit, 
-                  lck: gameState.player.lck 
-                };
-                const maxStat = Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b);
-                const grace = {
-                  int: { trait: "Arcane Prodigy", item: "Spell: Arcane Missile", desc: "+30 Max MP & Offensive Magic" },
-                  vit: { trait: "Resilient Soul", item: "Protective Amulet", desc: "+30 Max HP & Damage Reduction" },
-                  agi: { trait: "Ghost Step", item: "Swift Boots", desc: "High Evasion & Quick Retreat" },
-                  str: { trait: "Forceful Will", item: "Spell: Kinetic Blast", desc: "Bonus Damage & Physical Might" },
-                  lck: { trait: "Fortune's Favor", item: "Lucky Coin", desc: "High Critical Chance & Better Loot" },
-                }[maxStat[0] as keyof typeof stats] || { trait: "Versatile Apprentice", item: "None", desc: "Balanced potential" };
-
-                return (
-                  <div className="space-y-1">
-                    <div className="text-white font-bold font-display text-sm">{grace.trait}</div>
-                    <div className="text-slate-400 text-[10px] leading-tight">{grace.desc}</div>
-                    <div className="text-magic-purple text-[9px] font-bold uppercase tracking-tighter">Bonus Item: {grace.item}</div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
-              {[
-                { key: 'int', label: 'Intelligence', icon: <Sparkles size={16} />, desc: 'Magic Damage & Mana' },
-                { key: 'vit', label: 'Vitality', icon: <Heart size={16} />, desc: 'Health & Defense' },
-                { key: 'agi', label: 'Agility', icon: <Wind size={16} />, desc: 'Evasion & Speed' },
-                { key: 'str', label: 'Strength', icon: <Flame size={16} />, desc: 'Physical Force' },
-                { key: 'lck', label: 'Luck', icon: <Trophy size={16} />, desc: 'Criticals & Fortune' },
-              ].map((stat) => (
-                <div key={stat.key} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="text-magic-purple">{stat.icon}</div>
-                    <div className="text-left">
-                      <div className="text-white font-bold text-sm">{stat.label}</div>
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">{stat.desc}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button 
-                      disabled={(gameState.player[stat.key as keyof typeof gameState.player] as number) <= 5}
-                      onClick={() => {
-                        setGameState(prev => ({ ...prev, player: { ...prev.player, [stat.key]: (prev.player[stat.key as keyof typeof gameState.player] as number) - 1 } }));
-                        setAvailablePoints(prev => prev + 1);
-                      }}
-                      className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 disabled:opacity-30 transition-colors"
-                    >
-                      -
-                    </button>
-                    <span className="w-6 text-center font-bold text-white">{(gameState.player[stat.key as keyof typeof gameState.player] as number)}</span>
-                    <button 
-                      disabled={availablePoints <= 0}
-                      onClick={() => {
-                        setGameState(prev => ({ ...prev, player: { ...prev.player, [stat.key]: (prev.player[stat.key as keyof typeof gameState.player] as number) + 1 } }));
-                        setAvailablePoints(prev => prev - 1);
-                      }}
-                      className="w-8 h-8 rounded-lg bg-magic-purple/20 border border-magic-purple/30 text-magic-purple flex items-center justify-center hover:bg-magic-purple/30 disabled:opacity-30 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button 
-              disabled={availablePoints > 0}
-              onClick={finalizeCharacter}
-              className="w-full py-4 bg-magic-purple hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-xl shadow-magic-purple/20 disabled:opacity-50 font-display"
-            >
-              BEGIN JOURNEY
-            </button>
-          </motion.div>
+          <CharacterCreation 
+            gameState={gameState}
+            setGameState={setGameState}
+            availablePoints={availablePoints}
+            setAvailablePoints={setAvailablePoints}
+            onComplete={finalizeCharacter}
+            playSound={playSound}
+          />
         )}
 
         <motion.div 

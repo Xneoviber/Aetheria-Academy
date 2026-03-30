@@ -255,17 +255,26 @@ export const ENEMIES_BY_LOCATION: { [key: string]: Enemy[] } = {
 };
 
 export const GRACES = [
-  { name: "None", desc: "No special blessing.", cost: 0 },
-  { name: "Arcane Affinity", desc: "+10% Magic Damage", cost: 1 },
-  { name: "Iron Skin", desc: "+10% Damage Reduction", cost: 1 },
-  { name: "Fleet Foot", desc: "+10% Evasion Chance", cost: 1 },
+  { name: "None", desc: "No special blessing.", cost: 0, type: "General" },
+  { name: "Arcane Affinity", desc: "+15% Magic Damage, but -5% Physical Defense.", cost: 2, type: "Offensive" },
+  { name: "Iron Skin", desc: "+15% Damage Reduction, but -10% Evasion.", cost: 2, type: "Defensive" },
+  { name: "Fleet Foot", desc: "+15% Evasion Chance, but -10% Max HP.", cost: 2, type: "Utility" },
+  { name: "Giant's Might", desc: "+15% Physical Damage, but -10% Mana Pool.", cost: 2, type: "Offensive" },
+  { name: "Fortune's Favor", desc: "+10% Critical Chance and +20% Gold/Loot.", cost: 3, type: "Utility" },
+  { name: "Mana Well", desc: "Recover 3 MP every turn automatically.", cost: 3, type: "Utility" },
+  { name: "Scholar's Mind", desc: "+20% Experience Gained from all sources.", cost: 3, type: "Utility" },
+  { name: "Phoenix Spark", desc: "Once per battle, survive a lethal hit with 1 HP.", cost: 4, type: "Defensive" },
 ];
 
 export const CURSES = [
-  { name: "None", desc: "No innate curse.", bonus: 0 },
-  { name: "Mana Leak", desc: "-5 MP per turn in combat", bonus: 1 },
-  { name: "Brittle Bones", desc: "+10% Damage taken", bonus: 1 },
-  { name: "Unlucky Soul", desc: "-5% Critical Chance", bonus: 1 },
+  { name: "None", desc: "No innate curse.", bonus: 0, type: "General" },
+  { name: "Mana Leak", desc: "-5 MP per turn in combat.", bonus: 2, type: "Resource" },
+  { name: "Brittle Bones", desc: "+15% Damage taken from all sources.", bonus: 2, type: "Defensive" },
+  { name: "Unlucky Soul", desc: "-10% Critical Chance and -10% Loot quality.", bonus: 2, type: "Utility" },
+  { name: "Heavy Burden", desc: "-20% Evasion and -10% Agility.", bonus: 3, type: "Utility" },
+  { name: "Feeble Mind", desc: "-15% Magic Damage and -10% Intelligence.", bonus: 3, type: "Offensive" },
+  { name: "Hemophilia", desc: "Lose 2% of Max HP every turn in combat.", bonus: 3, type: "Resource" },
+  { name: "Arcane Void", desc: "Spells cost 50% more Mana to cast.", bonus: 4, type: "Resource" },
 ];
 
 export const TRAITS = [

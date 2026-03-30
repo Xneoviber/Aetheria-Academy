@@ -6,6 +6,7 @@ export function useLevelUp(
   setGameState: Dispatch<SetStateAction<GameState>>,
   setGameStarted: (started: boolean) => void,
   setDistributingStats: (distributing: boolean) => void,
+  setSelectingGender: (selecting: boolean) => void,
   addLog: (message: string) => void
 ) {
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -43,19 +44,44 @@ export function useLevelUp(
     if (p.grace !== "None") addLog(`✨ You are blessed with ${p.grace}.`);
     if (p.curse !== "None") addLog(`🌑 You carry the burden of ${p.curse}.`);
 
+    // Synergy Logic
+    let synergyBonus = { str: 0, agi: 0, int: 0, vit: 0, lck: 0 };
+    if (p.grace === "Arcane Affinity" && p.curse === "Mana Leak") {
+      synergyBonus.int = 5;
+      addLog("🔮 Synergy Active: Mana Surge! (+5 Intelligence)");
+    } else if (p.grace === "Iron Skin" && p.curse === "Brittle Bones") {
+      synergyBonus.vit = 5;
+      addLog("🛡️ Synergy Active: Hardened Shell! (+5 Vitality)");
+    } else if (p.grace === "Fleet Foot" && p.curse === "Heavy Burden") {
+      synergyBonus.agi = 5;
+      addLog("🏃 Synergy Active: Steady Momentum! (+5 Agility)");
+    } else if (p.grace === "Giant's Might" && p.curse === "Feeble Mind") {
+      synergyBonus.str = 5;
+      addLog("💪 Synergy Active: Primal Force! (+5 Strength)");
+    } else if (p.grace === "Fortune's Favor" && p.curse === "Unlucky Soul") {
+      synergyBonus.lck = 5;
+      addLog("🎲 Synergy Active: Gambler's Paradox! (+5 Luck)");
+    }
+
     setGameState(prev => ({
       ...prev,
       player: {
         ...prev.player,
         trait,
-        maxHp: prev.player.vit * 10 + 50 + bonusHp,
-        hp: prev.player.vit * 10 + 50 + bonusHp,
-        maxMp: prev.player.int * 10 + 50 + bonusMp,
-        mp: prev.player.int * 10 + 50 + bonusMp,
+        str: prev.player.str + synergyBonus.str,
+        agi: prev.player.agi + synergyBonus.agi,
+        int: prev.player.int + synergyBonus.int,
+        vit: prev.player.vit + synergyBonus.vit,
+        lck: prev.player.lck + synergyBonus.lck,
+        maxHp: (prev.player.vit + synergyBonus.vit) * 10 + 50 + bonusHp,
+        hp: (prev.player.vit + synergyBonus.vit) * 10 + 50 + bonusHp,
+        maxMp: (prev.player.int + synergyBonus.int) * 10 + 50 + bonusMp,
+        mp: (prev.player.int + synergyBonus.int) * 10 + 50 + bonusMp,
         inventory: [...prev.player.inventory, startingItem].filter(Boolean)
       }
     }));
     setDistributingStats(false);
+    setSelectingGender(false);
     setGameStarted(true);
   };
 
