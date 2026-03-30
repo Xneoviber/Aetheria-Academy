@@ -59,6 +59,7 @@ import { LocationViewport } from './components/LocationViewport';
 import { MessageLog } from './components/MessageLog';
 import { GameMenuModal } from './components/GameMenuModal';
 import { MainMenu } from './components/MainMenu';
+import { InventoryModal } from './components/InventoryModal';
 
 
 import { useAudio } from './hooks/useAudio';
@@ -96,6 +97,7 @@ export default function App() {
     equipItem,
     unequipItem,
     useItem,
+    removeItem,
     unlockSkill
   } = useGameState(playSound);
 
@@ -136,6 +138,7 @@ export default function App() {
     addLog
   );
 
+  const [showInventory, setShowInventory] = useState(false);
   const [showSkillTree, setShowSkillTree] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
@@ -286,10 +289,19 @@ export default function App() {
             unequipItem={unequipItem}
           />
 
-          <InventoryPanel 
-            inventory={gameState.player.inventory}
-            useItem={useItem}
-          />
+          <div className="relative group">
+            <InventoryPanel 
+              inventory={gameState.player.inventory}
+              useItem={useItem}
+            />
+            <button 
+              onClick={() => setShowInventory(true)}
+              className="absolute top-6 right-6 p-2 bg-magic-purple/20 text-magic-purple rounded-xl hover:bg-magic-purple/30 transition-all border border-magic-purple/30"
+              title="Open Full Inventory"
+            >
+              <Package size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Bottom: Message Log */}
@@ -297,6 +309,14 @@ export default function App() {
           <MessageLog history={gameState.history} logEndRef={logEndRef} />
         </div>
       </main>
+
+      <InventoryModal 
+        show={showInventory} 
+        onClose={() => setShowInventory(false)} 
+        inventory={gameState.player.inventory} 
+        useItem={useItem}
+        removeItem={removeItem}
+      />
 
       <QuestModal 
         show={showQuests} 

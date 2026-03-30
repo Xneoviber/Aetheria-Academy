@@ -88,20 +88,19 @@ export const GAME_ITEMS: { [key: string]: Item } = {
     stats: { int: 2 },
     icon: <Sword size={16} />
   },
-  "Apprentice Robe": {
-    id: "apprentice_robe",
-    name: "Apprentice Robe",
-    description: "Standard academy uniform. +2 VIT.",
-    type: "Armor",
-    stats: { vit: 2 },
-    icon: <Shield size={16} />
-  },
   "Mana Potion": {
     id: "mana_potion",
     name: "Mana Potion",
     description: "Restores 50 MP.",
     type: "Consumable",
     icon: <Zap size={16} />
+  },
+  "Health Potion": {
+    id: "health_potion",
+    name: "Health Potion",
+    description: "Restores 50 HP.",
+    type: "Consumable",
+    icon: <Flame size={16} className="text-red-400" />
   },
   "Mana Crystal": {
     id: "mana_crystal",
@@ -146,6 +145,22 @@ export const GAME_ITEMS: { [key: string]: Item } = {
     stats: { int: 1, lck: 1 },
     icon: <Circle size={16} />
   },
+  "Protective Amulet": {
+    id: "protective_amulet",
+    name: "Protective Amulet",
+    description: "A heavy amulet that shields the wearer. +5 VIT.",
+    type: "Accessory",
+    stats: { vit: 5 },
+    icon: <Shield size={16} className="text-blue-400" />
+  },
+  "Lucky Coin": {
+    id: "lucky_coin",
+    name: "Lucky Coin",
+    description: "A gold coin that seems to bring good fortune. +5 LCK.",
+    type: "Accessory",
+    stats: { lck: 5 },
+    icon: <Circle size={16} className="text-yellow-400" />
+  },
   "Wooden Staff": {
     id: "wooden_staff",
     name: "Wooden Staff",
@@ -161,6 +176,30 @@ export const GAME_ITEMS: { [key: string]: Item } = {
     type: "Weapon",
     stats: { int: 8, lck: 2 },
     icon: <Sparkles size={16} />
+  },
+  "Steel Dagger": {
+    id: "steel_dagger",
+    name: "Steel Dagger",
+    description: "A sharp blade for quick strikes. +4 STR, +2 AGI.",
+    type: "Weapon",
+    stats: { str: 4, agi: 2 },
+    icon: <Sword size={16} className="text-slate-400" />
+  },
+  "Apprentice Robe": {
+    id: "apprentice_robe",
+    name: "Apprentice Robe",
+    description: "Standard issue robes for academy students. +2 INT, +2 VIT.",
+    type: "Armor",
+    stats: { int: 2, vit: 2 },
+    icon: <Shield size={16} className="text-magic-purple" />
+  },
+  "Swift Boots": {
+    id: "swift_boots",
+    name: "Swift Boots",
+    description: "Lightweight boots that make you feel faster. +5 AGI.",
+    type: "Armor",
+    stats: { agi: 5 },
+    icon: <Wind size={16} className="text-green-400" />
   }
 };
 

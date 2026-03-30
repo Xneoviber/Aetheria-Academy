@@ -151,6 +151,9 @@ export function useGameState(
         if (item.id === 'mana_potion') {
           newMp = Math.min(prev.player.maxMp, prev.player.mp + 50);
           addLog(`🧪 You drank a Mana Potion. Restored 50 MP.`);
+        } else if (item.id === 'health_potion') {
+          newHp = Math.min(prev.player.maxHp, prev.player.hp + 50);
+          addLog(`🧪 You drank a Health Potion. Restored 50 HP.`);
         }
 
         return {
@@ -166,6 +169,24 @@ export function useGameState(
     } else if (['Weapon', 'Armor', 'Accessory'].includes(item.type)) {
       equipItem(itemName);
     }
+  };
+
+  const removeItem = (itemName: string) => {
+    setGameState(prev => {
+      const newInventory = [...prev.player.inventory];
+      const itemIndex = newInventory.indexOf(itemName);
+      if (itemIndex > -1) {
+        newInventory.splice(itemIndex, 1);
+        addLog(`🗑️ Discarded ${itemName}.`);
+      }
+      return {
+        ...prev,
+        player: {
+          ...prev.player,
+          inventory: newInventory
+        }
+      };
+    });
   };
 
   const unlockSkill = (skillId: string) => {
@@ -214,6 +235,7 @@ export function useGameState(
     equipItem,
     unequipItem,
     useItem,
+    removeItem,
     unlockSkill
   };
 }
