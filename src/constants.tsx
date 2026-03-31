@@ -22,13 +22,13 @@ export const WORLD: { [key: string]: Location } = {
   "Grand Hall": {
     name: "Grand Hall",
     description: "The heart of Aetheria Academy. Towering stained-glass windows depict legendary wizards, and floating candles illuminate the marble floors.",
-    image: "https://images.unsplash.com/photo-1519074063912-ad25b57b9d17?auto=format&fit=crop&q=80&w=1000",
+    image: "assets/academy-grand-hall.webp",
     exits: { "north": "Library", "east": "Training Grounds", "south": "Dormitories", "west": "Alchemy Lab" }
   },
   "Library": {
     name: "Library",
     description: "A labyrinth of ancient scrolls and whispering books. The air smells of old parchment and latent magical energy.",
-    image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=1000",
+    image: "assets/academy-library.webp",
     exits: { "south": "Grand Hall" }
   },
   "Training Grounds": {
@@ -40,7 +40,7 @@ export const WORLD: { [key: string]: Location } = {
   "Dormitories": {
     name: "Dormitories",
     description: "Your private sanctuary. A comfortable bed and a desk cluttered with scrolls. A perfect place to recover your energy.",
-    image: "https://images.unsplash.com/photo-1555854816-802f188095e4?auto=format&fit=crop&q=80&w=1000",
+    image: "assets/academy-dormitory.webp",
     exits: { "north": "Grand Hall" }
   },
   "Alchemy Lab": {
