@@ -23,7 +23,7 @@ export const WORLD: { [key: string]: Location } = {
   "Grand Hall": {
     name: "Grand Hall",
     description: "The heart of Aetheria Academy. Towering stained-glass windows depict legendary wizards, and floating candles illuminate the marble floors.",
-    image: "{BASE}assets/academy-grand-hall.webp",
+    image: "public/assets/academy-grand-hall.webp",
     exits: { "north": "Library", "east": "Training Grounds", "south": "Dormitories", "west": "Alchemy Lab" }
   },
   "Library": {
