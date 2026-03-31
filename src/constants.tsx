@@ -18,17 +18,18 @@ import {
 } from 'lucide-react';
 import { Location, Player, Item, Skill, Enemy } from './types';
 
+const BASE = import.meta.env.BASE_URL;
 export const WORLD: { [key: string]: Location } = {
   "Grand Hall": {
     name: "Grand Hall",
     description: "The heart of Aetheria Academy. Towering stained-glass windows depict legendary wizards, and floating candles illuminate the marble floors.",
-    image: "/assets/academy-grand-hall.webp",
+    image: "{BASE}assets/academy-grand-hall.webp",
     exits: { "north": "Library", "east": "Training Grounds", "south": "Dormitories", "west": "Alchemy Lab" }
   },
   "Library": {
     name: "Library",
     description: "A labyrinth of ancient scrolls and whispering books. The air smells of old parchment and latent magical energy.",
-    image: "/assets/academy-library.webp",
+    image: "{BASE}assets/academy-library.webp",
     exits: { "south": "Grand Hall" }
   },
   "Training Grounds": {
@@ -40,7 +41,7 @@ export const WORLD: { [key: string]: Location } = {
   "Dormitories": {
     name: "Dormitories",
     description: "Your private sanctuary. A comfortable bed and a desk cluttered with scrolls. A perfect place to recover your energy.",
-    image: "/assets/academy-dormitory.webp",
+    image: "{BASE}assets/academy-dormitory.webp",
     exits: { "north": "Grand Hall" }
   },
   "Alchemy Lab": {
